@@ -1,2 +1,2 @@
-// signals.c
+// signals.cpp
 #include "signals.h"

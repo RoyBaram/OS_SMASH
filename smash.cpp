@@ -1,12 +1,16 @@
-//smash.c
+// smash.cpp
 
 /*=============================================================================
 * includes, defines, usings
 =============================================================================*/
-#include <stdlib.h>
+#include <iostream>
+#include <vector>
+#include <string>
 
-#include "commands.h"
 #include "signals.h"
+#include "commands.h"
+
+using namespace std;
 
 /*=============================================================================
 * classes/structs declarations
@@ -22,17 +26,20 @@ char _line[CMD_LENGTH_MAX];
 =============================================================================*/
 int main(int argc, char* argv[])
 {
-	char _cmd[CMD_LENGTH_MAX];
-	while(1) {
-		printf("smash > ");
-		fgets(_line, CMD_LENGTH_MAX, stdin);
-		strcpy(_cmd, _line);
-		//execute command
+	string line;
+	string cmd;
 
-		//initialize buffers for next command
-		_line[0] = '\0';
-		_cmd[0] = '\0';
+	while(true) {
+		cout << "smash > ";
+		if (!getline(cin, line)) {
+			break;
+		}
+		cmd = line;
+		// TO-DO: execute command...
+
+		// initialize vars for next command
+		line.clear();
+		cmd.clear();
+
+		return 0;
 	}
-
-	return 0;
-}

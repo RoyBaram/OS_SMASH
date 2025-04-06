@@ -3,10 +3,13 @@
 /*=============================================================================
 * includes, defines, usings
 =============================================================================*/
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib.h>
+#include <iostream>
+#include <vector>
 
-#define CMD_LENGTH_MAX 120
+using namespace std;
+
+#define CMD_LENGTH_MAX 80
 #define ARGS_NUM_MAX 20
 #define JOBS_NUM_MAX 100
 
@@ -16,11 +19,13 @@
 =============================================================================*/
 #define ERROR_EXIT(msg) \
     do { \
-        fprintf(stderr, "%s: %d\n%s", __FILE__, __LINE__, msg); \
+        cerr << __FILE__ << ": " << __LINE__ << \
+        endl << msg; \
+        // fprintf(stderr, "%s: %d\n%s", __FILE__, __LINE__, msg); \ // C syntax
         exit(1); \
     } while(0);
 
-static inline void* _validatedMalloc(size_t size)
+/* static inline void* _validatedMalloc(size_t size)
 {
     void* ptr = malloc(size);
     if(!ptr) ERROR_EXIT("malloc");
@@ -31,7 +36,12 @@ static inline void* _validatedMalloc(size_t size)
 // char* bufffer = MALLOC_VALIDATED(char, MAX_LINE_SIZE);
 // which automatically includes error handling
 #define MALLOC_VALIDATED(type, size) \
-    ((type*)_validatedMalloc((size)))
+    ((type*)_validatedMalloc((size)))  */ // C syntax; irrelevant for C++
+
+typedef struct {
+    string cmd;
+    vector<string> args;
+} CmdArgs;
 
 
 /*=============================================================================
@@ -43,7 +53,7 @@ typedef enum  {
 } ParsingError;
 
 typedef enum {
-	SMASH_SUCCESS = 0,
+	SMASH_SUCCESS = 1,
 	SMASH_QUIT,
 	SMASH_FAIL
 	//feel free to add more values here or delete this
@@ -52,6 +62,6 @@ typedef enum {
 /*=============================================================================
 * global functions
 =============================================================================*/
-int parseCommandExample(char* line);
+int parseCmd(string line, CmdArgs& result);
 
 #endif //COMMANDS_H
