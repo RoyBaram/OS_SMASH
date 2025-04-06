@@ -10,12 +10,17 @@ void perrorSmash(const string cmd, const string msg) {
 		 << msg << endl;
 }
 
-int parseCmd(string line, CmdArgs& result) {
+int parseCmd(const string& line, Command& result) {
 	isstringstream iss(line);
 	string token;
 	vector<string> tokens;
+	bool bg = false;
 
-	for (iss >> token && tokens.size() < ARGS_NUM_MAX) {
+	while (iss >> token && tokens.size() < ARGS_NUM_MAX) {
+		if (token == "&") {
+			bg = true;
+			continue;
+		}
 		tokens.push_back(token);
 	}
 
@@ -23,8 +28,10 @@ int parseCmd(string line, CmdArgs& result) {
 		return INVALID_COMMAND;
 	}
 
-	result.cmd = tokens[0];
-	result.args.assign(tokens.begin(), tokens.end());
+	result.setCmd(tokens[0]);
+	result.setBg(bg);
+	result.setArgs(tokens);
 
 	return 0;
 }
+
