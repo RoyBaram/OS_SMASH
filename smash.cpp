@@ -6,9 +6,12 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <unordered_map>
+#include <functional>
 
 #include "signals.h"
 #include "commands.h"
+#include "prints.h"
 
 using namespace std;
 
@@ -22,6 +25,18 @@ using namespace std;
 char _line[CMD_LENGTH_MAX];
 JobIDs IDs;
 set<Job, JobCompare> jobList;
+unordered_map<string, function<void(const Command&)>> internalCmds = {
+	{"showpid", intShowpid},
+	{"pwd", intPwd},
+	{"cd", intCd},
+	//{"jobs", /**/},
+	//{"kill", /**/},
+	//{"fg", /**/},
+	//{"bg", /**/},
+	//{"quit", /**/},
+	//{"diff", /**/},
+};
+string prevWd("");
 
 /*=============================================================================
 * main function
@@ -37,12 +52,12 @@ int main(int argc, char* argv[])
 			break;
 		}
 		cmd = line;
-		// TO-DO: execute command...
 		Command command;
-
-		
-
 		parseCmd(cmd, command);
+
+		chkUpdtJoblStatus(jobList);
+
+		executeCommand(command);
 
 		// prints used for testing
 		/*cout << "your command: " << command.getCmd() << " with arguments: [";
@@ -57,7 +72,6 @@ int main(int argc, char* argv[])
 		// initialize vars for next command
 		line.clear();
 		cmd.clear();
-
-		return 0;
 	}
+	return 0;
 }
