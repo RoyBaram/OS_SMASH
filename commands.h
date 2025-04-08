@@ -3,17 +3,21 @@
 /*=============================================================================
 * includes, defines, usings
 =============================================================================*/
-#include <cstdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <set>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 using namespace std;
 
 #define CMD_LENGTH_MAX 80
 #define ARGS_NUM_MAX 20
 #define JOBS_NUM_MAX 100
-#define NO_JOB_ID -1
+#define NO_ID -1
 
 /*=============================================================================
 * error handling - some useful macros and examples of error handling,
@@ -23,13 +27,18 @@ using namespace std;
     do { \
         cerr << __FILE__ << ": " << __LINE__ << \
         endl << msg; \
-        // fprintf(stderr, "%s: %d\n%s", __FILE__, __LINE__, msg); \ // C syntax
         exit(1); \
     } while(0);
 
 /*=============================================================================
 * classes/structs declarations
 =============================================================================*/
+
+typedef enum {
+    FOREGROUND = 0,
+    BACKGROUND,
+    STOPPED
+} JobStatus;
 
 class Command {
 private:
@@ -38,10 +47,8 @@ private:
     vector<string> args;
 
 public:
-    Command(bool status = false, const string& cmd = "", const vector<string>& args = {})
-        : bg(status), cmd(cmd), args(args) {}
-
-    Command() : bg(false), cmd(), args() {}
+    Command(bool bg = false, const string& cmd = "", const vector<string>& args = {})
+        : bg(bg), cmd(cmd), args(args) {}
 
     void setCmd(const string& newCmd) {
         cmd = newCmd;
@@ -66,18 +73,18 @@ public:
     void setArgs(const vector<string>& newArgs) {
         args = newArgs;
     }
-
-}
+};
 
 class Job : public Command {
 private:
     int jobID;
-    Command command;
+    pid_t pid;
+    JobStatus status;
 
 public:
-    Job() : jobID(NO_JOB_ID), command() {}
-    Job(int ID) : jobID(ID), command() {}
-    Job(int ID, Command cmd) : jobID(ID), command(cmd) {}
+    Job() : Command(), jobID(NO_ID), pid(NO_ID) {}
+    Job(int ID) : Command(), jobID(ID), pid(NO_ID) {}
+    Job(int ID, Command cmd) : Command(cmd), jobID(ID), pid(NO_ID) {}
 
     int getJobID() const {
         return jobID;
@@ -87,16 +94,58 @@ public:
         jobID = newID;
     }
 
-    const Command& getCommand() const {
-        return command;
+    JobStatus getStatus() const {
+        return status;
     }
 
-    void setCommand(const Command& cmd) {
-        command = cmd;
+    void setStatus(JobStatus newStatus) {
+        status = newStatus;
     }
 
-}
+    pid_t getJobPid() const {
+        return pid;
+    }
 
+    void setJobPid(pid_t newPid) {
+        pid = newPid;
+    }
+};
+
+class JobIDs {
+private:
+    set<int> available;
+
+public:
+    JobIDs() {
+        for (int i = 0; i < JOBS_NUM_MAX; i++) {
+            available.insert(i);
+        }
+    }
+
+    int getID() {
+        int id = *available.begin();
+        available.erase(id);
+        return id;
+    }
+
+    void insertID(int id) {
+        available.insert(id);
+    }
+
+    bool isEmpty() {
+        return available.empty();
+    }
+
+    size_t getSize() {
+        return available.size();
+    }
+};
+
+struct JobCompare {
+    bool operator()(const Job& a, const Job& b) const {
+        return a.getJobID() < b.getJobID();
+    }
+};
 
 /*=============================================================================
 * error definitions, enums
@@ -113,15 +162,10 @@ typedef enum {
 	//feel free to add more values here or delete this
 } CommandResult;
 
-typedef enum {
-    FOREGROUND = 0,
-    BACKGROUND,
-    STOPPED
-} JobStatus;
-
 /*=============================================================================
 * global functions
 =============================================================================*/
-int parseCmd(string line, CmdArgs& result);
+int parseCmd(const string& line, Command& result);
+void checkJoblStatus(set<Job> jobList);
 
 #endif //COMMANDS_H

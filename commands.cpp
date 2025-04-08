@@ -11,7 +11,7 @@ void perrorSmash(const string cmd, const string msg) {
 }
 
 int parseCmd(const string& line, Command& result) {
-	isstringstream iss(line);
+	istringstream iss(line);
 	string token;
 	vector<string> tokens;
 	bool bg = false;
@@ -33,5 +33,18 @@ int parseCmd(const string& line, Command& result) {
 	result.setArgs(tokens);
 
 	return 0;
+}
+
+void checkJoblStatus(set<Job, JobCompare>& jobList) {
+	for (const auto job : jobList) {
+		pid_t pid = job.getJobPid();
+		int status;
+		pid_t res = waitpid(pid, &status, WNOHANG | WUNTRACED);
+
+		// process exited, no need to keep in jobs list
+		if (res == pid) {
+			jobList.erase(job);
+		}
+	}
 }
 

@@ -20,6 +20,8 @@ using namespace std;
 * global variables & data structures
 =============================================================================*/
 char _line[CMD_LENGTH_MAX];
+JobIDs IDs;
+set<Job, JobCompare> jobList;
 
 /*=============================================================================
 * main function
@@ -36,6 +38,21 @@ int main(int argc, char* argv[])
 		}
 		cmd = line;
 		// TO-DO: execute command...
+		Command command;
+
+		
+
+		parseCmd(cmd, command);
+
+		// prints used for testing
+		/*cout << "your command: " << command.getCmd() << " with arguments: [";
+		for (const auto arg : command.getArgs()) {
+			cout << arg << ", ";
+		}
+		string state = command.isBg() ? "background" : "foreground";
+		cout << "\b\b]; it is in " << state << endl;*/
+		
+
 
 		// initialize vars for next command
 		line.clear();
@@ -43,3 +60,4 @@ int main(int argc, char* argv[])
 
 		return 0;
 	}
+}
