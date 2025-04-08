@@ -1,16 +1,16 @@
-CC = gcc
-CFLAGS = -std=c99 -Wall -Werror -pedantic-errors -pthread -DNDEBUG
-SRCS = $(wildcard *.c)
-OBJS = $(SRCS:.c=.o)
+CXX = g++
+CXXFLAGS = -std=c++14 -Wall -Werror -pedantic-errors -pthread -DNDEBUG
+SRCS = $(wildcard *.cpp)
+OBJS = $(SRCS:.cpp=.o)
 TARGET = smash
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(TARGET)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(TARGET) $(OBJS)
