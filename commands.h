@@ -7,10 +7,12 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <unordered_map>
 #include <set>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "prints.h"
 
 using namespace std;
 
@@ -18,6 +20,11 @@ using namespace std;
 #define ARGS_NUM_MAX 20
 #define JOBS_NUM_MAX 100
 #define NO_ID -1
+
+#define NO_ARGS 1
+#define CD_ARGS 2
+#define EXEC 0
+#define NO_EXEC 1
 
 /*=============================================================================
 * error handling - some useful macros and examples of error handling,
@@ -35,7 +42,7 @@ using namespace std;
 =============================================================================*/
 
 typedef enum {
-    FOREGROUND = 0,
+    NOSTATUS = 0,
     BACKGROUND,
     STOPPED
 } JobStatus;
@@ -82,9 +89,9 @@ private:
     JobStatus status;
 
 public:
-    Job() : Command(), jobID(NO_ID), pid(NO_ID) {}
-    Job(int ID) : Command(), jobID(ID), pid(NO_ID) {}
-    Job(int ID, Command cmd) : Command(cmd), jobID(ID), pid(NO_ID) {}
+    Job() : Command(), jobID(NO_ID), pid(NO_ID), status(NOSTATUS) {}
+    Job(int ID) : Command(), jobID(ID), pid(NO_ID), status(NOSTATUS) {}
+    Job(int ID, Command cmd) : Command(cmd), jobID(ID), pid(NO_ID), status(NOSTATUS) {}
 
     int getJobID() const {
         return jobID;
@@ -166,6 +173,20 @@ typedef enum {
 * global functions
 =============================================================================*/
 int parseCmd(const string& line, Command& result);
-void checkJoblStatus(set<Job> jobList);
+void chkUpdtJoblStatus(set<Job, JobCompare>& jobList);
+string getcwdStr();
+bool checkNoArgs(const vector<string>& args);
+void runNewProc(
+    const Command& cmd,
+    unordered_map<string, function<void(const Command&)>>::iterator it,
+    int option);
+void executeCommand(const Command& cmd);
+
+/*=============================================================================
+* internal functions
+=============================================================================*/
+void intShowpid(const Command& cmd);
+void intPwd(const Command& cmd);
+void intCd(const Command& cmd);
 
 #endif //COMMANDS_H
