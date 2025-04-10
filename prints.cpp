@@ -3,7 +3,7 @@
 // C++ implementation for given example
 // function for printing errors from internal commands
 void perrorSmashInternal(const string cmd, const string msg) {
-	cout << "smash error:" 
+	cout << "smash error: " 
 		 << (cmd.empty() ? "" : cmd)
 		 << (cmd.empty() ? "" : ": ")
 		 << msg << endl;
