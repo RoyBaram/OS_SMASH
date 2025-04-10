@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++14 -Wall -Werror -pedantic-errors -pthread -DNDEBUG
+CXXFLAGS = -std=c++11 -Wall -Werror -pedantic-errors -pthread -DNDEBUG
 SRCS = $(wildcard *.cpp)
 OBJS = $(SRCS:.cpp=.o)
 TARGET = smash
