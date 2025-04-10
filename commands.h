@@ -9,9 +9,12 @@
 #include <vector>
 #include <unordered_map>
 #include <set>
+#include <functional>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <ctime>
+#include <stdexcept>
 #include "prints.h"
 
 using namespace std;
@@ -23,8 +26,12 @@ using namespace std;
 
 #define NO_ARGS 1
 #define CD_ARGS 2
+#define FG_ARGS 2
+#define KILL_ARGS 3
 #define EXEC 0
 #define NO_EXEC 1
+#define ID_ARG 1
+#define SIGNUM 2
 
 /*=============================================================================
 * error handling - some useful macros and examples of error handling,
@@ -87,11 +94,12 @@ private:
     int jobID;
     pid_t pid;
     JobStatus status;
+    time_t startTime;
 
 public:
-    Job() : Command(), jobID(NO_ID), pid(NO_ID), status(NOSTATUS) {}
-    Job(int ID) : Command(), jobID(ID), pid(NO_ID), status(NOSTATUS) {}
-    Job(int ID, Command cmd) : Command(cmd), jobID(ID), pid(NO_ID), status(NOSTATUS) {}
+    Job() : Command(), jobID(NO_ID), pid(NO_ID), status(NOSTATUS), startTime(0) {}
+    Job(int ID) : Command(), jobID(ID), pid(NO_ID), status(NOSTATUS), startTime(0) {}
+    Job(int ID, Command cmd) : Command(cmd), jobID(ID), pid(NO_ID), status(NOSTATUS), startTime(0) {}
 
     int getJobID() const {
         return jobID;
@@ -115,6 +123,14 @@ public:
 
     void setJobPid(pid_t newPid) {
         pid = newPid;
+    }
+
+    time_t getJobStart() const {
+        return startTime;
+    }
+
+    void setJobStart(time_t sTime) {
+        startTime = sTime;
     }
 };
 
@@ -169,6 +185,14 @@ typedef enum {
 	//feel free to add more values here or delete this
 } CommandResult;
 
+typedef enum {
+    EXECV = 1,
+    TIME,
+    GETCWD,
+    FORK,
+    WAITPID
+} CmdErr;
+
 /*=============================================================================
 * global functions
 =============================================================================*/
@@ -188,5 +212,8 @@ void executeCommand(const Command& cmd);
 void intShowpid(const Command& cmd);
 void intPwd(const Command& cmd);
 void intCd(const Command& cmd);
+void intJobs(const Command& cmd);
+void intKill(const Command& cmd);
+void intFg(const Command& cmd);
 
 #endif //COMMANDS_H
