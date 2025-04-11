@@ -30,19 +30,30 @@ int parseCmd(const string& line, Command& result) {
 }
 
 void chkUpdtJoblStatus(set<Job, JobCompare>& jobList) {
-	for (auto job : jobList) {
-		pid_t pid = job.getJobPid();
+	for (auto job = jobList.begin(); job != jobList.end(); ) {
+		pid_t pid = job->getJobPid();
 		int status;
-		pid_t res = waitpid(pid, &status, WNOHANG);
+		pid_t res = waitpid(pid, &status, WNOHANG | WUNTRACED | WCONTINUED);
 
-		// process exited, no need to keep in jobs list
+		// process changed status
 		if (res == pid) {
-			IDs.insertID(job.getJobID());
-			jobList.erase(job);
+			// process is stopped, changes status accordingly
+			if (WIFSTOPPED(status)) {
+				const_cast<Job&>(*job).setStatus(STOPPED);
+				++job;
+			}
+			else if (WIFCONTINUED(status)) {
+				const_cast<Job&>(*job).setStatus(NOSTATUS);
+				++job;
+			}
+			// process finished, no need to keep in jobs list
+			else {
+				IDs.insertID(job->getJobID());
+				job = jobList.erase(job);
+			}
 		}
-
-		else if (WIFSTOPPED(status)) {
-			job.setStatus(STOPPED);
+		else {
+			++job;
 		}
 	}
 }
@@ -308,7 +319,7 @@ void intFg(const Command& cmd) {
 	else if (nargs == FG_ARGS) {
 		try {
 			id = stoi(args[ID_ARG]);
-		} catch(const exception& ex1) {
+		} catch(const exception& ex) {
 			perrorSmashInternal(_cmd, "invalid arguments");
 			return;
 		}
@@ -336,4 +347,77 @@ void intFg(const Command& cmd) {
 		exit(WAITPID);
 	}
 	jobList.erase(job);
+}
+
+void intBg(const Command& cmd) {
+	int id;
+	string _cmd;
+	vector<string> args = cmd.getArgs();
+	pid_t pid;
+	int nargs = args.size();
+	set<Job, JobCompare>::iterator job;
+	// if no arguments were given to bg
+	if (nargs == NO_ARGS) {
+		// the list is empty
+		if (jobList.size() == 0) {
+			perrorSmashInternal(_cmd, "there are no stopped jobs to resume");
+			return;
+		}
+		// the list has at least one job
+		else {
+			auto it = prev(jobList.end());
+			while(true) {
+				if (it->getStatus() == STOPPED) {
+					job = it;
+					id = job->getJobID();
+					pid = job->getJobPid();
+					break;
+				}
+
+				// got to the first element, and found no stopped jobs
+				if (it == jobList.begin()) {
+					perrorSmashInternal(_cmd, "there are no stopped jobs to resume");
+					return;
+				}
+
+				it--;
+			}
+		}
+	}
+	// arguments were given
+	else if (nargs == FG_ARGS) {
+		try {
+			id = stoi(args[ID_ARG]);
+		} catch(const exception& ex) {
+			perrorSmashInternal(_cmd, "invalid arguments");
+			return;
+		}
+		Job tmp(id);
+		job = jobList.find(tmp);
+		if (job == jobList.end()) {
+			string msg = "job id " + to_string(id) + " does not exist";
+			perrorSmashInternal(cmd.getCmd(), msg);
+			return;
+		}
+	}
+	// invalid arguments were given
+	else {
+		perrorSmashInternal(cmd.getCmd(), "invalid arguments");
+		return;
+	}
+
+	pid = job->getJobPid();
+	// if given job ID is a stopped job
+	if (job->getStatus() == STOPPED) {
+				kill(pid, SIGCONT);
+				const_cast<Job&>(*job).setStatus(NOSTATUS);
+	}
+	// if given job ID is not stopped
+	else {
+		string msg = "job id " + to_string(id) + " is already in background";
+		perrorSmashInternal(cmd.getCmd(), msg);
+		return;
+	}
+	_cmd = rebuildCmd(job->getArgs(), job->isBg());
+	cout << _cmd << ": " << pid << endl;
 }

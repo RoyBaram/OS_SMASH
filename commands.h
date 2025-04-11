@@ -215,5 +215,6 @@ void intCd(const Command& cmd);
 void intJobs(const Command& cmd);
 void intKill(const Command& cmd);
 void intFg(const Command& cmd);
+void intBg(const Command& cmd);
 
 #endif //COMMANDS_H
