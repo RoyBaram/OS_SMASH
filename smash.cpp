@@ -32,7 +32,7 @@ unordered_map<string, function<void(const Command&)>> internalCmds = {
 	{"jobs", intJobs},
 	{"kill", intKill},
 	{"fg", intFg},
-	//{"bg", /**/},
+	{"bg", intBg},
 	//{"quit", /**/},
 	//{"diff", /**/},
 };
