@@ -200,6 +200,7 @@ bool checkNDir(int fd) {
 }
 
 bool openFileAndCheck(string path, int *retFd) {
+	//cerr << "now trying to open: " << path << endl;
 	int fd = open(path.c_str(), O_RDONLY);
 	bool retval = true;
 	*retFd = BAD_FD;
@@ -529,6 +530,7 @@ void intDiff(const Command& cmd) {
 		int fd1, fd2;
 		ssize_t read1, read2;
 		char block1[BLOCK_SIZE], block2[BLOCK_SIZE];
+		//cerr << "received paths: " << "1. " << args[FILE_1] << " 2. " << args[FILE_2] << endl;
 		if (openFileAndCheck(args[FILE_1], &fd1)) {
 			if (openFileAndCheck(args[FILE_2], &fd2)) {
 				do {

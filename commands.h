@@ -37,8 +37,8 @@ using namespace std;
 #define NO_EXEC 1
 #define ID_ARG 1
 #define SIGNUM 2
-#define FILE_1 2
-#define FILE_2 3
+#define FILE_1 1
+#define FILE_2 2
 #define DIFF_ARGS 3
 #define BAD_FD -1
 #define BLOCK_SIZE 256
