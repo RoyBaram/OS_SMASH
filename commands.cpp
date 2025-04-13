@@ -178,6 +178,57 @@ string rebuildCmd(const vector<string>& strs, bool bg) {
 	return oss.str();
 }
 
+void safeClose(int fd) {
+	if (close(fd) != 0) {
+		perror("smash error: close failed");
+		exit(CLOSE);
+	}
+}
+
+bool checkNDir(int fd) {
+	struct stat st;
+	// use fstat() to get info on file descriptor
+	if(fstat(fd, &st) != 0) {
+		perror("smash error: fstat failed");
+		return false;
+	}
+	if (S_ISDIR(st.st_mode)) {
+		perrorSmashInternal("diff", "paths are not files");
+		return false;
+	}
+	return true;
+}
+
+bool openFileAndCheck(string path, int *retFd) {
+	int fd = open(path.c_str(), O_RDONLY);
+	bool retval = true;
+	*retFd = BAD_FD;
+	// couldn't open file in read-only mode
+	if (fd == BAD_FD) {
+		switch (errno) {
+		case ENOENT:
+			perrorSmashInternal("diff", "expected valid paths for files");
+			retval = false;
+			break;
+		default:
+			perror("smash error: open failed");
+			break;
+		}
+	}
+	// opened file in read-only mode
+	else {
+		if (!checkNDir(fd)) {
+			retval = false;
+			safeClose(fd);
+		}
+		else {
+			*retFd = fd;
+		}
+	}
+
+	return retval;
+}
+
 /*=============================================================================
 * implementation of built-in (internal) commands
 =============================================================================*/
@@ -464,5 +515,45 @@ void intQuit(const Command& cmd) {
 			job++;
 		}
 		exit(SMASH_SUCCESS);
+	}
+}
+
+void intDiff(const Command& cmd) {
+	vector<string> args = cmd.getArgs();
+	string output = IDENT;
+	int nargs = args.size();
+	if (nargs != DIFF_ARGS) {
+		perrorSmashInternal(cmd.getCmd(), "expected 2 arguments");
+	}
+	else {
+		int fd1, fd2;
+		ssize_t read1, read2;
+		char block1[BLOCK_SIZE], block2[BLOCK_SIZE];
+		if (openFileAndCheck(args[FILE_1], &fd1)) {
+			if (openFileAndCheck(args[FILE_2], &fd2)) {
+				do {
+					read1 = read(fd1, block1, (size_t) BLOCK_SIZE);
+					read2 = read(fd2, block2, (size_t) BLOCK_SIZE);
+					if ((int) read1 < 0 or (int) read2 < 0) {
+						perror("smash error: read failed");
+						safeClose(fd1);
+						safeClose(fd2);
+						exit(READ);
+					}
+					else if (read1 != read2) {
+						output = DIFFER;
+					}
+					for (int byte = 0; byte < read1; byte++) {
+						if (block1[byte] != block2[byte]) {
+							output = DIFFER;
+						}
+					}
+				}
+				while ((read1 > 0 && read2 > 0) && (output != DIFFER));
+				cout << output << endl;
+				safeClose(fd1);
+				safeClose(fd2);
+			}
+		}
 	}
 }

@@ -15,6 +15,8 @@
 #include <unistd.h>
 #include <ctime>
 #include <stdexcept>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include "prints.h"
 
 using namespace std;
@@ -35,6 +37,13 @@ using namespace std;
 #define NO_EXEC 1
 #define ID_ARG 1
 #define SIGNUM 2
+#define FILE_1 2
+#define FILE_2 3
+#define DIFF_ARGS 3
+#define BAD_FD -1
+#define BLOCK_SIZE 256
+#define DIFFER "1"
+#define IDENT "0"
 
 /*=============================================================================
 * error handling - some useful macros and examples of error handling,
@@ -193,7 +202,9 @@ typedef enum {
     TIME,
     GETCWD,
     FORK,
-    WAITPID
+    WAITPID,
+    CLOSE,
+    READ
 } CmdErr;
 
 /*=============================================================================
@@ -220,5 +231,6 @@ void intKill(const Command& cmd);
 void intFg(const Command& cmd);
 void intBg(const Command& cmd);
 void intQuit(const Command& cmd);
+void intDiff(const Command& cmd);
 
 #endif //COMMANDS_H
