@@ -23,10 +23,13 @@ using namespace std;
 #define ARGS_NUM_MAX 20
 #define JOBS_NUM_MAX 100
 #define NO_ID -1
-
+#define WAIT_TIME 5
 #define NO_ARGS 1
 #define CD_ARGS 2
 #define FG_ARGS 2
+#define QUIT_ARGS 2
+#define KILL_ARG 1
+#define QUIT_KILL "kill"
 #define KILL_ARGS 3
 #define EXEC 0
 #define NO_EXEC 1
@@ -216,5 +219,6 @@ void intJobs(const Command& cmd);
 void intKill(const Command& cmd);
 void intFg(const Command& cmd);
 void intBg(const Command& cmd);
+void intQuit(const Command& cmd);
 
 #endif //COMMANDS_H

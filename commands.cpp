@@ -421,3 +421,48 @@ void intBg(const Command& cmd) {
 	_cmd = rebuildCmd(job->getArgs(), job->isBg());
 	cout << _cmd << ": " << pid << endl;
 }
+
+void intQuit(const Command& cmd) {
+	int id;
+	pid_t pid;
+	vector<string> args = cmd.getArgs();
+	int nargs = args.size();
+	// to many arguments
+	if (nargs > QUIT_ARGS) {
+		perrorSmashInternal(cmd.getCmd(), "expected 0 or 1 arguments");
+		return;
+	}
+	// no arguments
+	else if (nargs == NO_ARGS) {
+		exit(SMASH_SUCCESS);
+	}
+	// additional argument given
+	else if(nargs == QUIT_ARGS) {
+		// not "kill" argument
+		if (args[KILL_ARG] != QUIT_KILL) {
+			perrorSmashInternal(cmd.getCmd(), "unexpected arguments");
+			return;
+		}
+		for (auto job = jobList.begin(); job != jobList.end(); ) {
+			id = job->getJobID();
+			pid = job->getJobPid();
+			int status;
+			cout << "[" << id << "] " << rebuildCmd(job->getArgs(), job->isBg());
+			cout << " - sending SIGTERM... ";
+			cout << flush;
+			kill(pid, SIGTERM);
+			sleep(WAIT_TIME);
+			waitpid(pid, &status, WNOHANG);
+			if (WIFSIGNALED(status)) {
+				cout << "done" << endl;
+			}
+			else {
+				cout << "sending SIGKILL...";
+				kill(pid, SIGKILL);
+				cout << "done" << endl;
+			}
+			job++;
+		}
+		exit(SMASH_SUCCESS);
+	}
+}
