@@ -452,8 +452,8 @@ void intQuit(const Command& cmd) {
 			cout << flush;
 			kill(pid, SIGTERM);
 			sleep(WAIT_TIME);
-			waitpid(pid, &status, WNOHANG);
-			if (WIFSIGNALED(status)) {
+			int waitedpid = waitpid(pid, &status, WNOHANG);
+			if (waitedpid && WIFSIGNALED(status)) {
 				cout << "done" << endl;
 			}
 			else {
