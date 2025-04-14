@@ -3,21 +3,25 @@
 /*=============================================================================
 * includes, defines, usings
 =============================================================================*/
+#include "prints.h"
+#include "signals.h"
+
 #include <cstdlib>
+#include <ctime>
+#include <functional>
 #include <iostream>
 #include <sstream>
-#include <vector>
-#include <unordered_map>
 #include <set>
-#include <functional>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <ctime>
 #include <stdexcept>
+#include <unordered_map>
+#include <vector>
+
 #include <fcntl.h>
+#include <unistd.h>
+
+#include <sys/types.h>
 #include <sys/stat.h>
-#include "prints.h"
+#include <sys/wait.h>
 
 using namespace std;
 

@@ -1,6 +1,7 @@
 // commands.cpp
 #include "commands.h"
 #include "globals.h"
+#include "signals.h"
 
 
 
@@ -58,6 +59,25 @@ void chkUpdtJoblStatus(set<Job, JobCompare>& jobList) {
 	}
 }
 
+void insertJobToList(const Command& cmd, JobStatus status, pid_t pid) {
+	int jobId = IDs.getID();
+	Job newJob(jobId, cmd);
+	newJob.setStatus(status);
+	newJob.setJobPid(pid);
+	time_t sTime = time(NULL);
+	if (sTime == ((time_t) -1)) {
+		perror("smash error: time failed");
+		exit(TIME);
+	}
+	newJob.setJobStart(sTime);
+	cerr << "[DEBUG] inserting job " << cmd.getCmd() << " args: ";
+	for (const auto& arg : cmd.getArgs()) {
+		cerr << arg << " ";
+	}
+	cerr << "status: " << status << endl;
+	jobList.insert(newJob);
+}
+
 void executeCommand(const Command& cmd) {
 	string _cmd = cmd.getCmd();
 
@@ -75,6 +95,10 @@ void executeCommand(const Command& cmd) {
 	}
 	else {
 		runNewProc(cmd, it, EXEC);
+		if (sentSigint == SIGNALED) {
+			sentSigint = NOT_SIGNALED;
+			return;
+		}
 	}
 }
 
@@ -90,6 +114,7 @@ void runNewProc(
 	argv.push_back(nullptr);
 	int childPid = fork();
 	if (childPid == 0) {
+		currTaskPid = getpid();
 		setpgrp();
 		switch(option) {
 		case NO_EXEC:
@@ -104,20 +129,19 @@ void runNewProc(
 	}
 	else if (childPid > 0) {
 		if (!cmd.isBg()) {
-			waitpid(childPid, NULL, 0);
+			int status;
+			waitpid(childPid, &status, WUNTRACED);
+			// external command running in FG was stopped using CTRL+Z
+			if (WIFSTOPPED(status)) {
+				insertJobToList(cmd, STOPPED, childPid);
+			}
+			else if (sentSigtstp) {
+				sentSigtstp = NOT_SIGNALED;
+				insertJobToList(cmd, STOPPED, childPid);
+			}
 		}
 		else {
-			int jobId = IDs.getID();
-			Job newJob(jobId, cmd);
-			newJob.setStatus(BACKGROUND);
-			newJob.setJobPid(childPid);
-			time_t sTime = time(NULL);
-			if (sTime == ((time_t) -1)) {
-				perror("smash error: time failed");
-				exit(TIME);
-			}
-			newJob.setJobStart(sTime);
-			jobList.insert(newJob);
+			insertJobToList(cmd, BACKGROUND, childPid);
 		}
 	}
 	else {
@@ -200,7 +224,6 @@ bool checkNDir(int fd) {
 }
 
 bool openFileAndCheck(string path, int *retFd) {
-	//cerr << "now trying to open: " << path << endl;
 	int fd = open(path.c_str(), O_RDONLY);
 	bool retval = true;
 	*retFd = BAD_FD;
@@ -213,6 +236,7 @@ bool openFileAndCheck(string path, int *retFd) {
 			break;
 		default:
 			perror("smash error: open failed");
+			retval = false;
 			break;
 		}
 	}
@@ -530,7 +554,6 @@ void intDiff(const Command& cmd) {
 		int fd1, fd2;
 		ssize_t read1, read2;
 		char block1[BLOCK_SIZE], block2[BLOCK_SIZE];
-		//cerr << "received paths: " << "1. " << args[FILE_1] << " 2. " << args[FILE_2] << endl;
 		if (openFileAndCheck(args[FILE_1], &fd1)) {
 			if (openFileAndCheck(args[FILE_2], &fd2)) {
 				do {
