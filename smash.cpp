@@ -3,15 +3,15 @@
 /*=============================================================================
 * includes, defines, usings
 =============================================================================*/
-#include <iostream>
-#include <vector>
-#include <string>
-#include <unordered_map>
-#include <functional>
-
-#include "signals.h"
 #include "commands.h"
 #include "prints.h"
+#include "signals.h"
+
+#include <iostream>
+#include <functional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 using namespace std;
 
@@ -37,19 +37,35 @@ unordered_map<string, function<void(const Command&)>> internalCmds = {
 	{"diff", intDiff},
 };
 string prevWd("");
+pid_t smashPID = 0;
+pid_t currTaskPid = 0;
+volatile sig_atomic_t sentSigint = NOT_SIGNALED;
+volatile sig_atomic_t sentSigtstp = NOT_SIGNALED;
 
 /*=============================================================================
 * main function
 =============================================================================*/
 int main(int argc, char* argv[])
 {
+	smashPID = getpid();
 	string line;
 	string cmd;
+	struct sigaction sa_sigint, sa_sigtstp;
+	sa_sigint.sa_handler = sigintHandler;
+	sa_sigtstp.sa_handler = sigtstpHandler;
+	sigaction(SIGINT, &sa_sigint, NULL);
+	sigaction(SIGTSTP, &sa_sigtstp, NULL);
 
 	while(true) {
+		currTaskPid = getpid();
 		cout << "smash > ";
 		if (!getline(cin, line)) {
-			break;
+			if (sentSigint == SIGNALED || sentSigtstp == SIGNALED) {
+				cin.clear();
+				sentSigint = NOT_SIGNALED;
+				sentSigtstp = NOT_SIGNALED;
+				continue;
+			}
 		}
 		cmd = line;
 		Command command;
@@ -59,9 +75,9 @@ int main(int argc, char* argv[])
 
 		executeCommand(command);
 
-		// prints used for testing
+		// prints used for debugging
 		/*cout << "your command: " << command.getCmd() << " with arguments: [";
-		for (const auto arg : command.getArgs()) {
+		for (const auto& arg : command.getArgs()) {
 			cout << arg << ", ";
 		}
 		string state = command.isBg() ? "background" : "foreground";
