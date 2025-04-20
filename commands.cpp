@@ -70,11 +70,11 @@ void insertJobToList(const Command& cmd, JobStatus status, pid_t pid) {
 		exit(TIME);
 	}
 	newJob.setJobStart(sTime);
-	cerr << "[DEBUG] inserting job " << cmd.getCmd() << " args: ";
+	/*cerr << "[DEBUG] inserting job " << cmd.getCmd() << " args: ";
 	for (const auto& arg : cmd.getArgs()) {
 		cerr << arg << " ";
 	}
-	cerr << "status: " << status << endl;
+	cerr << "status: " << status << endl;*/
 	jobList.insert(newJob);
 }
 
