@@ -236,5 +236,6 @@ void intFg(const Command& cmd);
 void intBg(const Command& cmd);
 void intQuit(const Command& cmd);
 void intDiff(const Command& cmd);
+void intDoNothing(const Command& cmd);
 
 #endif //COMMANDS_H

@@ -582,3 +582,7 @@ void intDiff(const Command& cmd) {
 		}
 	}
 }
+
+void intDoNothing(const Command& cmd) {
+	return;
+}

@@ -35,6 +35,7 @@ unordered_map<string, function<void(const Command&)>> internalCmds = {
 	{"bg", intBg},
 	{"quit", intQuit},
 	{"diff", intDiff},
+	{"", intDoNothing}
 };
 string prevWd("");
 pid_t smashPID = 0;
