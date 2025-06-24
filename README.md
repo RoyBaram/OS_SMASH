@@ -1,2 +1,2 @@
 # OS_SMASH
-repo for first wet assignment in course OS Architecture
+A small model of a shell (SMASH = small shell), built as an assignment in OS course
